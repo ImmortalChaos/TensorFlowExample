@@ -41,7 +41,7 @@ def face_detection(img_path, show_marking, crop_face, target_path):
             print(target_filepath)
             cv2.imwrite(target_filepath, roi_color)
     if crop_face:
-        return
+        return detect_cnt
     if target_path is not None:
         if detect_cnt:
             target_filepath = os.path.join(target_path, filename+"_result.png")
@@ -51,6 +51,28 @@ def face_detection(img_path, show_marking, crop_face, target_path):
         cv2.imshow('detect '+str(detect_cnt)+' people', img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+    return detect_cnt
+
+def detect_images(folder_path, show_marking, crop_face, target_path):
+    """
+    detection from sub-folders
+    """
+    for (paths, dirs, files) in os.walk(folder_path):
+        for filename in files:
+            ext = os.path.splitext(filename)[-1]
+            if ext in ('.png', '.jpg'):
+                detect_path = os.path.join(paths, filename)
+                if face_detection(detect_path, show_marking, crop_face, target_path) == 0:
+                    print(detect_path + "(detection fail!)")
+
+def check_valid_argument(arg_val):
+    """
+    check validation
+    """
+    if not os.path.exists(arg_val.source):
+        print("Can't find", arg_val.source)
+        return False
+    return True
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Face Detection Program')
@@ -63,4 +85,8 @@ if __name__ == "__main__":
                         help='Saves the detected face area as an image.')
     args = parser.parse_args()
     source_folder = args.source
-    face_detection(source_folder, args.show_marking, args.crop_face, args.target)
+    if check_valid_argument(args):
+        if os.path.isdir(source_folder):
+            detect_images(source_folder, args.show_marking, args.crop_face, args.target)
+        else:
+            face_detection(source_folder, args.show_marking, args.crop_face, args.target)
