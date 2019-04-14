@@ -31,7 +31,7 @@ def get_parameter_in_filename(img_path):
     answer_cnt = get_string_val(img_path,
         ["_1p", "_2p", "_3p", "_4p", "_5p", "_6p", "_7p", "_8p", "_9p"],
         [1, 2, 3, 4, 5, 6, 7, 8, 9],
-        1)
+        0)
 
     min_neighbors = get_string_val(img_path,
         ["_1n", "_2n", "_3n", "_4n", "_5n", "_6n", "_7n", "_8n"],
@@ -59,6 +59,8 @@ def face_detection(img_path, show_marking, crop_face, target_path):
     img = cv2.imread(img_path)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     faces = face_cascade.detectMultiScale(gray, scale_factor, min_neighbors)
+    if answer_cnt and answer_cnt is not len(faces):
+    	return 0
     faces_sorted = sorted(faces, key=lambda face: face[0])
     for (x, y, w, h) in faces_sorted:
         detect_cnt += 1
@@ -124,5 +126,5 @@ if __name__ == "__main__":
     if check_valid_argument(args):
         if os.path.isdir(source_folder):
             detect_images(source_folder, args.show_marking, args.crop_face, args.target)
-        else:
-            face_detection(source_folder, args.show_marking, args.crop_face, args.target)
+        elif face_detection(source_folder, args.show_marking, args.crop_face, args.target) == 0:
+            print("Can't find face!")
