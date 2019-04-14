@@ -24,8 +24,8 @@ def get_parameter_in_filename(img_path):
     Parsing parameter
     """
     scale_factor = get_string_val(img_path,
-        ["_1.2f", "_1.3f", "_1.4f", "_1.5f", "_1.6f", "_1.7f", "_1.8f"],
-        [1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8],
+        ["_1.2f", "_1.25f", "_1.3f", "_1.4f", "_1.5f", "_1.6f", "_1.7f", "_1.8f"],
+        [1.2, 1.25, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8],
         1.3)
 
     answer_cnt = get_string_val(img_path,
@@ -38,7 +38,12 @@ def get_parameter_in_filename(img_path):
         [1, 2, 3, 4, 5, 6, 8],
         5)
 
-    return scale_factor, min_neighbors, answer_cnt
+    crop_index = get_string_val(img_path,
+        ["_1i", "_2i", "_3i", "_4i", "_5i", "_6i", "_7i", "_8i", "_9i"],
+        [1, 2, 3, 4, 5, 6, 8, 9],
+        0)
+
+    return scale_factor, min_neighbors, answer_cnt, crop_index
 
 def face_detection(img_path, show_marking, crop_face, target_path):
     """
@@ -50,12 +55,15 @@ def face_detection(img_path, show_marking, crop_face, target_path):
 
     filename = get_filename(img_path)
     detect_cnt = 0
-    scale_factor, min_neighbors, answer_cnt = get_parameter_in_filename(img_path)
+    scale_factor, min_neighbors, answer_cnt, crop_index = get_parameter_in_filename(img_path)
     img = cv2.imread(img_path)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     faces = face_cascade.detectMultiScale(gray, scale_factor, min_neighbors)
-    for (x, y, w, h) in faces:
+    faces_sorted = sorted(faces, key=lambda face: face[0])
+    for (x, y, w, h) in faces_sorted:
         detect_cnt += 1
+        if crop_index and crop_index is not detect_cnt:
+        	continue
         if crop_face is False and show_marking:
             img = cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
         roi_gray = gray[y:y+h, x:x+w]
