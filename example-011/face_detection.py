@@ -13,6 +13,33 @@ def get_filename(img_path):
     filename = os.path.splitext(img_path)
     return os.path.basename(filename[0])
 
+def get_string_val(param, str_dict, num_value, default_value):
+	for idx in range(len(str_dict)):
+	    if str_dict[idx] in param:
+	        return num_value[idx]
+	return default_value
+
+def get_parameter_in_filename(img_path):
+    """
+    Parsing parameter
+    """
+    scale_factor = get_string_val(img_path,
+        ["_1.2f", "_1.3f", "_1.4f", "_1.5f", "_1.6f", "_1.7f", "_1.8f"],
+        [1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8],
+        1.3)
+
+    answer_cnt = get_string_val(img_path,
+        ["_1p", "_2p", "_3p", "_4p", "_5p", "_6p", "_7p", "_8p", "_9p"],
+        [1, 2, 3, 4, 5, 6, 7, 8, 9],
+        1)
+
+    min_neighbors = get_string_val(img_path,
+        ["_1n", "_2n", "_3n", "_4n", "_5n", "_6n", "_7n", "_8n"],
+        [1, 2, 3, 4, 5, 6, 8],
+        5)
+
+    return scale_factor, min_neighbors, answer_cnt
+
 def face_detection(img_path, show_marking, crop_face, target_path):
     """
     Face Detection from image
@@ -23,10 +50,12 @@ def face_detection(img_path, show_marking, crop_face, target_path):
 
     filename = get_filename(img_path)
     detect_cnt = 0
+    scale_factor, min_neighbors, answer_cnt = get_parameter_in_filename(img_path)
     img = cv2.imread(img_path)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+    faces = face_cascade.detectMultiScale(gray, scale_factor, min_neighbors)
     for (x, y, w, h) in faces:
+        detect_cnt += 1
         if crop_face is False and show_marking:
             img = cv2.rectangle(img, (x, y), (x+w, y+h), (255, 0, 0), 2)
         roi_gray = gray[y:y+h, x:x+w]
@@ -36,7 +65,6 @@ def face_detection(img_path, show_marking, crop_face, target_path):
             if show_marking:
                 cv2.rectangle(roi_color, (ex, ey), (ex+ew, ey+eh), (0, 255, 0), 2)
         if crop_face is True and target_path is not None:
-            detect_cnt += 1
             target_filepath = os.path.join(target_path, filename+"_"+str(detect_cnt)+".png")
             print(target_filepath)
             cv2.imwrite(target_filepath, roi_color)
@@ -48,7 +76,7 @@ def face_detection(img_path, show_marking, crop_face, target_path):
             print(target_filepath)
             cv2.imwrite(target_filepath, img)
     else:
-        cv2.imshow('detect '+str(detect_cnt)+' people', img)
+        cv2.imshow('detect '+str(detect_cnt)+' people(sf:'+str(scale_factor)+')', img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
     return detect_cnt
